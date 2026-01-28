@@ -19,7 +19,7 @@ app.get("/", (req, res) => {
   res.send("ISML backend running");
 });
 
-// ✅ REGISTER API (NEW)
+// ✅ REGISTER API
 app.post("/register", async (req, res) => {
   try {
     const { name, email, phone, language } = req.body;
@@ -44,6 +44,44 @@ app.post("/register", async (req, res) => {
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ===================================================
+   ✅ RAZORPAY WEBHOOK (NEW CODE – ADD THIS)
+   =================================================== */
+app.post("/razorpay/webhook", async (req, res) => {
+  try {
+    const event = req.body;
+
+    // We only care about successful payments
+    if (event.event === "payment.captured") {
+      const payment = event.payload.payment.entity;
+
+      const paymentId = payment.id;
+      const amount = payment.amount; // in paise
+      const method = payment.method;
+      const contact = payment.contact; // phone number
+
+      // Update enrollment using phone number
+      await pool.query(
+        `
+        UPDATE enrollments
+        SET payment_status = 'paid',
+            payment_id = $1,
+            payment_method = $2,
+            payment_amount = $3,
+            payment_at = CURRENT_DATE
+        WHERE phone = $4
+        `,
+        [paymentId, method, amount, contact]
+      );
+    }
+
+    res.status(200).json({ status: "ok" });
+  } catch (err) {
+    console.error("Webhook error:", err);
+    res.status(500).json({ error: "Webhook failed" });
   }
 });
 
