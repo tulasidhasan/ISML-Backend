@@ -74,7 +74,7 @@ app.post("/razorpay/webhook", async (req, res) => {
             payment_at = CURRENT_DATE
         WHERE phone = $4
         `,
-        [paymentId, method, amount, contact]
+        [paymentId, method, amount, phone]
       );
     }
 
