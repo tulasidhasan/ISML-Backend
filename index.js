@@ -61,7 +61,7 @@ app.post("/razorpay/webhook", async (req, res) => {
       const paymentId = payment.id;
       const amount = payment.amount; // in paise
       const method = payment.method;
-      const contact = payment.contact; // phone number
+      const phone = payment.notes?.phone; // phone number
 
       // Update enrollment using phone number
       await pool.query(
