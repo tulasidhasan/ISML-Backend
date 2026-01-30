@@ -3,64 +3,51 @@ import crypto from "crypto";
 import cors from "cors";
 import dotenv from "dotenv";
 
-// Load env variables
 dotenv.config();
 
 const app = express();
-
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// PayU credentials from ENV
+// PayU TEST credentials from Railway ENV
 const MERCHANT_KEY = process.env.PAYU_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYU_MERCHANT_SALT;
-
-if (!MERCHANT_KEY || !MERCHANT_SALT) {
-  console.error("❌ PayU Merchant Key or Salt missing in ENV");
-}
 
 // Health check
 app.get("/", (req, res) => {
   res.send("Backend running successfully");
 });
 
-// Generate PayU hash
+// Hash generation
 app.post("/hash", (req, res) => {
-  try {
-    const { txnid, amount, productinfo, firstname, email } = req.body;
+  const { txnid, amount, productinfo, firstname, email } = req.body;
 
-    if (!txnid || !amount || !productinfo || !firstname || !email) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const hashString =
-      `${MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${MERCHANT_SALT}`;
-
-    const hash = crypto
-      .createHash("sha512")
-      .update(hashString)
-      .digest("hex");
-
-    res.json({ hash });
-  } catch (err) {
-    console.error("Hash error:", err);
-    res.status(500).json({ error: "Hash generation failed" });
+  if (!txnid || !amount || !productinfo || !firstname || !email) {
+    return res.status(400).json({ error: "Missing fields" });
   }
+
+  // ⚠️ DO NOT MODIFY THIS STRING
+  const hashString =
+    `${MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${MERCHANT_SALT}`;
+
+  const hash = crypto
+    .createHash("sha512")
+    .update(hashString)
+    .digest("hex");
+
+  res.json({ hash });
 });
 
-// PayU success
+// PayU callbacks
 app.post("/success", (req, res) => {
   res.send("PAYMENT SUCCESS (TEST)");
 });
 
-// PayU failure
 app.post("/failure", (req, res) => {
   res.send("PAYMENT FAILED (TEST)");
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
