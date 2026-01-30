@@ -9,13 +9,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
-app.post("/hash", (req, res) => {
-  const key = process.env.PAYU_MERCHANT_KEY.trim();
-  const salt = process.env.PAYU_MERCHANT_SALT.trim();
+// 🔹 TEST HASH (GET — so browser works)
+app.get("/hash", (req, res) => {
+  const key = process.env.PAYU_MERCHANT_KEY?.trim();
+  const salt = process.env.PAYU_MERCHANT_SALT?.trim();
+
+  if (!key || !salt) {
+    return res.status(500).json({ error: "Key or salt missing in ENV" });
+  }
 
   const txnid = "TXN001";
   const amount = "10";
@@ -23,15 +29,8 @@ app.post("/hash", (req, res) => {
   const firstname = "Tulasi";
   const email = "test@mail.com";
 
-  // udf1–udf5 MUST exist (even empty)
-  const udf1 = "";
-  const udf2 = "";
-  const udf3 = "";
-  const udf4 = "";
-  const udf5 = "";
-
   const hashString =
-    `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`;
+    `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
 
   const hash = crypto
     .createHash("sha512")
@@ -39,18 +38,19 @@ app.post("/hash", (req, res) => {
     .digest("hex");
 
   res.json({
+    key,
     txnid,
     amount,
     productinfo,
     firstname,
     email,
-    udf1,
-    udf2,
-    udf3,
-    udf4,
-    udf5,
     hash
   });
+});
+
+// (We will use this later)
+app.post("/hash", (req, res) => {
+  res.json({ message: "POST hash endpoint ready" });
 });
 
 app.post("/success", (req, res) => {
