@@ -1,19 +1,23 @@
-// server.js
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const crypto = require('crypto');
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import crypto from 'crypto';
+
+// Initialize dotenv
+dotenv.config();
 
 const app = express();
 
 // Middleware
 app.use(express.json());
-// Allow requests from your Netlify Frontend
+
+// Allow requests from your Frontend
+// In production, replace '*' with 'https://isml-foundation.netlify.app' for better security
 app.use(cors({
-  origin: "*" // For testing. In production, replace '*' with your Netlify URL (e.g., 'https://isml-foundation.netlify.app')
+  origin: "*" 
 }));
 
-// ENV VARIABLES (Set these in Railway Dashboard)
+// ENV VARIABLES
 const MERCHANT_KEY = process.env.PAYU_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYU_MERCHANT_SALT;
 
@@ -44,7 +48,7 @@ app.post('/api/payment/hash', (req, res) => {
   }
 });
 
-// Health Check (To confirm Railway is running)
+// Health Check
 app.get('/', (req, res) => {
   res.send('Backend is running!');
 });
