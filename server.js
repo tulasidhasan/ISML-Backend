@@ -22,21 +22,22 @@ app.get("/", (req, res) => {
 app.post("/hash", (req, res) => {
   const { txnid, amount, productinfo, firstname, email } = req.body;
 
-  if (!txnid || !amount || !productinfo || !firstname || !email) {
-    return res.status(400).json({ error: "Missing fields" });
-  }
-
-  // ⚠️ DO NOT MODIFY THIS STRING
   const hashString =
-    `${MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${MERCHANT_SALT}`;
+    `${process.env.PAYU_MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${process.env.PAYU_MERCHANT_SALT}`;
+
+  // 🔴 DEBUG — VERY IMPORTANT
+  console.log("HASH STRING >>>", hashString);
 
   const hash = crypto
     .createHash("sha512")
     .update(hashString)
     .digest("hex");
 
+  console.log("HASH GENERATED >>>", hash);
+
   res.json({ hash });
 });
+
 
 // PayU callbacks
 app.post("/success", (req, res) => {
