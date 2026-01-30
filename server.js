@@ -1,64 +1,53 @@
-import express from "express";
-import crypto from "crypto";
-import cors from "cors";
-import dotenv from "dotenv";
-
-dotenv.config();
+// server.js
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const crypto = require('crypto');
 
 const app = express();
-app.use(cors());
+
+// Middleware
 app.use(express.json());
+// Allow requests from your Netlify Frontend
+app.use(cors({
+  origin: "*" // For testing. In production, replace '*' with your Netlify URL (e.g., 'https://isml-foundation.netlify.app')
+}));
 
-app.get("/", (req, res) => {
-  res.send("Backend running");
-});
+// ENV VARIABLES (Set these in Railway Dashboard)
+const MERCHANT_KEY = process.env.PAYU_MERCHANT_KEY;
+const MERCHANT_SALT = process.env.PAYU_MERCHANT_SALT;
 
-// ✅ SINGLE HASH ENDPOINT (GET + POST)
-app.all("/hash", (req, res) => {
-  const key = process.env.PAYU_MERCHANT_KEY?.trim();
-  const salt = process.env.PAYU_MERCHANT_SALT?.trim();
+if (!MERCHANT_KEY || !MERCHANT_SALT) {
+  console.error("CRITICAL ERROR: PayU Keys not found in environment variables.");
+}
 
-  if (!key || !salt) {
-    return res.status(500).json({
-      error: "PAYU_MERCHANT_KEY or PAYU_MERCHANT_SALT missing"
-    });
+// ROUTE: Generate Hash
+app.post('/api/payment/hash', (req, res) => {
+  try {
+    const { txnid, amount, productinfo, firstname, email } = req.body;
+
+    if (!txnid || !amount || !productinfo || !firstname || !email) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // PayU Hash Formula:
+    // sha512(key|txnid|amount|productinfo|firstname|email|||||||||||salt)
+    const hashString = `${MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${MERCHANT_SALT}`;
+    
+    // Generate Hash
+    const hash = crypto.createHash('sha512').update(hashString).digest('hex');
+
+    res.json({ hash: hash, key: MERCHANT_KEY });
+  } catch (error) {
+    console.error("Hash Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-
-  // FIXED TEST VALUES
-  const txnid = "TXN001";
-  const amount = "10";
-  const productinfo = "PayU Test";
-  const firstname = "Tulasi";
-  const email = "test@mail.com";
-
-  const hashString =
-    `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
-
-  const hash = crypto
-    .createHash("sha512")
-    .update(hashString, "utf8")
-    .digest("hex");
-
-  res.json({
-    key,
-    txnid,
-    amount,
-    productinfo,
-    firstname,
-    email,
-    hash
-  });
 });
 
-app.post("/success", (req, res) => {
-  res.send("PAYMENT SUCCESS");
+// Health Check (To confirm Railway is running)
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
 });
 
-app.post("/failure", (req, res) => {
-  res.send("PAYMENT FAILED");
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
