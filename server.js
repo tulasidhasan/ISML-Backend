@@ -1,57 +1,70 @@
-import dotenv from 'dotenv';
-import express from 'express';
-import cors from 'cors';
-import crypto from 'crypto';
+import express from "express";
+import crypto from "crypto";
+import cors from "cors";
+import dotenv from "dotenv";
 
-// Initialize dotenv
 dotenv.config();
 
 const app = express();
-
-// Middleware
+app.use(cors());
 app.use(express.json());
 
-// Allow requests from your Frontend
-// In production, replace '*' with 'https://isml-foundation.netlify.app' for better security
-app.use(cors({
-  origin: "*" 
-}));
-
-// ENV VARIABLES
-const MERCHANT_KEY = process.env.PAYU_MERCHANT_KEY;
-const MERCHANT_SALT = process.env.PAYU_MERCHANT_SALT;
-
-if (!MERCHANT_KEY || !MERCHANT_SALT) {
-  console.error("CRITICAL ERROR: PayU Keys not found in environment variables.");
-}
-
-// ROUTE: Generate Hash
-app.post('/api/payment/hash', (req, res) => {
-  try {
-    const { txnid, amount, productinfo, firstname, email } = req.body;
-
-    if (!txnid || !amount || !productinfo || !firstname || !email) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    // PayU Hash Formula:
-    // sha512(key|txnid|amount|productinfo|firstname|email|||||||||||salt)
-    const hashString = `${MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${MERCHANT_SALT}`;
-    
-    // Generate Hash
-    const hash = crypto.createHash('sha512').update(hashString).digest('hex');
-
-    res.json({ hash: hash, key: MERCHANT_KEY });
-  } catch (error) {
-    console.error("Hash Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+// Health check
+app.get("/", (req, res) => {
+  res.send("Backend running");
 });
 
-// Health Check
-app.get('/', (req, res) => {
-  res.send('Backend is running!');
+/**
+ * Create PayU payment
+ */
+app.post("/create-payment", (req, res) => {
+  const key = process.env.PAYU_MERCHANT_KEY.trim();
+  const salt = process.env.PAYU_MERCHANT_SALT.trim();
+
+  const {
+    name,
+    email,
+    phone
+  } = req.body;
+
+  // Fixed for now (can be dynamic later)
+  const txnid = "TXN" + Date.now();
+  const amount = "1299";
+  const productinfo = "ISML Course Registration";
+  const firstname = name;
+
+  const hashString =
+    `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
+
+  const hash = crypto
+    .createHash("sha512")
+    .update(hashString)
+    .digest("hex");
+
+  res.json({
+    key,
+    txnid,
+    amount,
+    productinfo,
+    firstname,
+    email,
+    phone,
+    surl: "https://isml-backend-production.up.railway.app/success",
+    furl: "https://isml-backend-production.up.railway.app/failure",
+    hash
+  });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// PayU callbacks
+app.post("/success", (req, res) => {
+  res.send("Payment Successful");
+});
+
+app.post("/failure", (req, res) => {
+  res.send("Payment Failed");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
