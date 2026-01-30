@@ -9,17 +9,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// PayU TEST credentials from Railway ENV
-const MERCHANT_KEY = process.env.PAYU_MERCHANT_KEY;
-const MERCHANT_SALT = process.env.PAYU_MERCHANT_SALT;
-
-// Health check
 app.get("/", (req, res) => {
-  res.send("Backend running successfully");
+  res.send("Backend running");
 });
 
-// Hash generation
 app.post("/hash", (req, res) => {
+  const key = process.env.PAYU_MERCHANT_KEY;
+  const salt = process.env.PAYU_MERCHANT_SALT;
+
   const txnid = "TXN001";
   const amount = "10";
   const productinfo = "PayU Test";
@@ -27,7 +24,7 @@ app.post("/hash", (req, res) => {
   const email = "test@mail.com";
 
   const hashString =
-    `${process.env.PAYU_MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${process.env.PAYU_MERCHANT_SALT}`;
+    `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
 
   const hash = crypto
     .createHash("sha512")
@@ -35,6 +32,7 @@ app.post("/hash", (req, res) => {
     .digest("hex");
 
   res.json({
+    key,
     txnid,
     amount,
     productinfo,
@@ -44,18 +42,15 @@ app.post("/hash", (req, res) => {
   });
 });
 
-
-
-// PayU callbacks
 app.post("/success", (req, res) => {
-  res.send("PAYMENT SUCCESS (TEST)");
+  res.send("PAYMENT SUCCESS");
 });
 
 app.post("/failure", (req, res) => {
-  res.send("PAYMENT FAILED (TEST)");
+  res.send("PAYMENT FAILED");
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port", PORT);
 });
