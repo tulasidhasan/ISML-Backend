@@ -14,8 +14,8 @@ app.get("/", (req, res) => {
 });
 
 app.post("/hash", (req, res) => {
-  const key = process.env.PAYU_MERCHANT_KEY?.trim();
-  const salt = process.env.PAYU_MERCHANT_SALT?.trim();
+  const key = process.env.PAYU_MERCHANT_KEY.trim();
+  const salt = process.env.PAYU_MERCHANT_SALT.trim();
 
   const txnid = "TXN001";
   const amount = "10";
@@ -23,8 +23,15 @@ app.post("/hash", (req, res) => {
   const firstname = "Tulasi";
   const email = "test@mail.com";
 
+  // udf1–udf5 MUST exist (even empty)
+  const udf1 = "";
+  const udf2 = "";
+  const udf3 = "";
+  const udf4 = "";
+  const udf5 = "";
+
   const hashString =
-    `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
+    `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`;
 
   const hash = crypto
     .createHash("sha512")
@@ -37,6 +44,11 @@ app.post("/hash", (req, res) => {
     productinfo,
     firstname,
     email,
+    udf1,
+    udf2,
+    udf3,
+    udf4,
+    udf5,
     hash
   });
 });
