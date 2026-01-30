@@ -20,23 +20,30 @@ app.get("/", (req, res) => {
 
 // Hash generation
 app.post("/hash", (req, res) => {
-  const { txnid, amount, productinfo, firstname, email } = req.body;
+  const txnid = "TXN001";
+  const amount = "10";
+  const productinfo = "PayU Test";
+  const firstname = "Tulasi";
+  const email = "test@mail.com";
 
   const hashString =
     `${process.env.PAYU_MERCHANT_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${process.env.PAYU_MERCHANT_SALT}`;
-
-  // 🔴 DEBUG — VERY IMPORTANT
-  console.log("HASH STRING >>>", hashString);
 
   const hash = crypto
     .createHash("sha512")
     .update(hashString)
     .digest("hex");
 
-  console.log("HASH GENERATED >>>", hash);
-
-  res.json({ hash });
+  res.json({
+    txnid,
+    amount,
+    productinfo,
+    firstname,
+    email,
+    hash
+  });
 });
+
 
 
 // PayU callbacks
