@@ -9,20 +9,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health check
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
-// 🔹 TEST HASH (GET — so browser works)
-app.get("/hash", (req, res) => {
+// ✅ SINGLE HASH ENDPOINT (GET + POST)
+app.all("/hash", (req, res) => {
   const key = process.env.PAYU_MERCHANT_KEY?.trim();
   const salt = process.env.PAYU_MERCHANT_SALT?.trim();
 
   if (!key || !salt) {
-    return res.status(500).json({ error: "Key or salt missing in ENV" });
+    return res.status(500).json({
+      error: "PAYU_MERCHANT_KEY or PAYU_MERCHANT_SALT missing"
+    });
   }
 
+  // FIXED TEST VALUES
   const txnid = "TXN001";
   const amount = "10";
   const productinfo = "PayU Test";
@@ -46,11 +48,6 @@ app.get("/hash", (req, res) => {
     email,
     hash
   });
-});
-
-// (We will use this later)
-app.post("/hash", (req, res) => {
-  res.json({ message: "POST hash endpoint ready" });
 });
 
 app.post("/success", (req, res) => {
