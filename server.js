@@ -14,9 +14,8 @@ app.get("/", (req, res) => {
 });
 
 app.post("/hash", (req, res) => {
-  // 🔒 FORCE CLEAN (THIS FIXES YOUR ERROR)
-  const key = String(process.env.PAYU_MERCHANT_KEY).trim();
-  const salt = String(process.env.PAYU_MERCHANT_SALT).trim();
+  const key = process.env.PAYU_MERCHANT_KEY?.trim();
+  const salt = process.env.PAYU_MERCHANT_SALT?.trim();
 
   const txnid = "TXN001";
   const amount = "10";
@@ -33,7 +32,6 @@ app.post("/hash", (req, res) => {
     .digest("hex");
 
   res.json({
-    key,
     txnid,
     amount,
     productinfo,
