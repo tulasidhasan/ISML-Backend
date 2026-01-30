@@ -1,9 +1,10 @@
-// Load env variables (works locally + Railway)
-require("dotenv").config();
+import express from "express";
+import crypto from "crypto";
+import cors from "cors";
+import dotenv from "dotenv";
 
-const express = require("express");
-const crypto = require("crypto");
-const cors = require("cors");
+// Load env variables
+dotenv.config();
 
 const app = express();
 
@@ -11,16 +12,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// PayU credentials from ENV (Railway Variables)
+// PayU credentials from ENV
 const MERCHANT_KEY = process.env.PAYU_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYU_MERCHANT_SALT;
 
-// Safety check
 if (!MERCHANT_KEY || !MERCHANT_SALT) {
   console.error("❌ PayU Merchant Key or Salt missing in ENV");
 }
 
-// Health check route
+// Health check
 app.get("/", (req, res) => {
   res.send("Backend running successfully");
 });
@@ -49,12 +49,12 @@ app.post("/hash", (req, res) => {
   }
 });
 
-// PayU success callback
+// PayU success
 app.post("/success", (req, res) => {
   res.send("PAYMENT SUCCESS (TEST)");
 });
 
-// PayU failure callback
+// PayU failure
 app.post("/failure", (req, res) => {
   res.send("PAYMENT FAILED (TEST)");
 });
