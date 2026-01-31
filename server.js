@@ -100,7 +100,7 @@ app.all("/payu-success", async (req, res) => {
   }
 
   // redirect user to frontend success page
-  res.redirect("https://YOUR_NETLIFY_SITE/success");
+  res.redirect("https://isml.netlify.app/success");
 });
 
 
@@ -120,7 +120,7 @@ app.all("/payu-failure", async (req, res) => {
     );
   }
 
-  res.redirect("https://YOUR_NETLIFY_SITE/failure");
+  res.redirect("https://isml.netlify.app/failure");
 });
 
 
