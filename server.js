@@ -81,23 +81,33 @@ app.post("/create-payment", async (req, res) => {
 
 /* PayU success callback */
 app.post("/success", async (req, res) => {
-  const { txnid } = req.body;
+  const {
+    txnid,
+    mihpayid,
+    status
+  } = req.body;
 
-  if (txnid) {
+  console.log("PayU SUCCESS:", req.body);
+
+  if (txnid && status === "success") {
     await pool.query(
       `UPDATE registrations
-       SET payment_status = 'SUCCESS'
-       WHERE txnid = $1`,
-      [txnid]
+       SET payment_status = 'SUCCESS',
+           payu_txn_id = $1
+       WHERE txnid = $2`,
+      [mihpayid, txnid]
     );
   }
 
   res.send("Payment Successful");
 });
 
+
 /* PayU failure callback */
 app.post("/failure", async (req, res) => {
   const { txnid } = req.body;
+
+  console.log("PayU FAILURE:", req.body);
 
   if (txnid) {
     await pool.query(
@@ -110,6 +120,7 @@ app.post("/failure", async (req, res) => {
 
   res.send("Payment Failed");
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
