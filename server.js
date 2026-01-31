@@ -23,45 +23,26 @@ app.post("/create-payment", (req, res) => {
     return res.status(500).json({ error: "PayU credentials missing" });
   }
 
-  const {
-    name,
-    email,
-    phone,
-    profession,
-    state,
-    batch,
-    amount
-  } = req.body;
+  const { name, email, phone, amount } = req.body;
 
-  /* Basic validation */
-  if (!name || !email || !phone || !profession || !state || !batch) {
+  if (!name || !email || !phone) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  /* PayU required fields */
   const txnid = "TXN" + Date.now();
-  const finalAmount = String(amount || "1299"); // ensure string
+  const finalAmount = String(amount || "1299.00");
   const productinfo = "ISML Foundation Program";
   const firstname = name;
 
-  /* Map extra data to UDFs */
-  const udf1 = batch;        // Weekday / Weekend
-  const udf2 = profession;
-  const udf3 = state;
-  const udf4 = phone;
-  const udf5 = "";
-
-  /* Hash string (IMPORTANT: exact order) */
+  // ✅ IMPORTANT: UDFs MUST BE EMPTY
   const hashString =
-    `${key}|${txnid}|${finalAmount}|${productinfo}|${firstname}|${email}|` +
-    `${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`;
+    `${key}|${txnid}|${finalAmount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
 
   const hash = crypto
     .createHash("sha512")
     .update(hashString, "utf8")
     .digest("hex");
 
-  /* Send everything frontend needs */
   res.json({
     key,
     txnid,
@@ -70,11 +51,6 @@ app.post("/create-payment", (req, res) => {
     firstname,
     email,
     phone,
-    udf1,
-    udf2,
-    udf3,
-    udf4,
-    udf5,
     surl: "https://isml-backend-production.up.railway.app/success",
     furl: "https://isml-backend-production.up.railway.app/failure",
     hash
