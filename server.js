@@ -82,12 +82,14 @@ app.post("/create-payment", async (req, res) => {
 });
 
 /* PayU success callback */
-app.all("/payu-success", async (req, res) => {
-  const data = { ...req.body, ...req.query };
+app.post("/success", async (req, res) => {
+  const {
+    txnid,
+    mihpayid,
+    status
+  } = req.body;
 
-  const txnid = data.txnid;
-  const status = data.status;
-  const mihpayid = data.mihpayid;
+  console.log("PayU SUCCESS:", req.body);
 
   if (txnid && status === "success") {
     await pool.query(
@@ -95,21 +97,21 @@ app.all("/payu-success", async (req, res) => {
        SET payment_status = 'SUCCESS',
            payu_txn_id = $1
        WHERE txnid = $2`,
-      [mihpayid || null, txnid]
+      [mihpayid, txnid]
     );
   }
 
-  // redirect user to frontend success page
-  res.redirect("https://isml.netlify.app/success");
+  res.send("Payment Successful");
 });
 
 
 
-/* PayU failure callback */
-app.all("/payu-failure", async (req, res) => {
-  const data = { ...req.body, ...req.query };
 
-  const txnid = data.txnid;
+/* PayU failure callback */
+app.post("/failure", async (req, res) => {
+  const { txnid } = req.body;
+
+  console.log("PayU FAILURE:", req.body);
 
   if (txnid) {
     await pool.query(
@@ -120,8 +122,9 @@ app.all("/payu-failure", async (req, res) => {
     );
   }
 
-  res.redirect("https://isml.netlify.app/failure");
+  res.send("Payment Failed");
 });
+
 
 
 
