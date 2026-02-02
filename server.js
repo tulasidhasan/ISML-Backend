@@ -133,10 +133,11 @@ app.listen(PORT, () => {
 });
 
 /* EXPORT REGISTRATIONS AS CSV */
-app.get("/download-registrations", async (req, res) => {
-  // 🔐 simple security
-  if (req.query.key !== process.env.ADMIN_EXPORT_KEY) {
-    return res.status(403).send("Unauthorized");
+app.post("/admin/download-registrations", async (req, res) => {
+  const { password } = req.body;
+
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
@@ -157,6 +158,7 @@ app.get("/download-registrations", async (req, res) => {
        ORDER BY created_at DESC`
     );
 
+    const { Parser } = await import("json2csv");
     const parser = new Parser();
     const csv = parser.parse(result.rows);
 
@@ -168,7 +170,7 @@ app.get("/download-registrations", async (req, res) => {
 
     res.send(csv);
   } catch (err) {
-    console.error("DOWNLOAD ERROR:", err);
-    res.status(500).send("Failed to download");
+    console.error("EXPORT ERROR:", err);
+    res.status(500).send("Download failed");
   }
 });
