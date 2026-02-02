@@ -3,6 +3,8 @@ import crypto from "crypto";
 import cors from "cors";
 import dotenv from "dotenv";
 import pkg from "pg";
+import { Parser } from "json2csv";
+
 
 dotenv.config();
 
@@ -128,4 +130,45 @@ app.all("/payu-failure", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
+});
+
+/* EXPORT REGISTRATIONS AS CSV */
+app.get("/download-registrations", async (req, res) => {
+  // 🔐 simple security
+  if (req.query.key !== process.env.ADMIN_EXPORT_KEY) {
+    return res.status(403).send("Unauthorized");
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT
+        txnid,
+        name,
+        email,
+        phone,
+        profession,
+        state,
+        batch,
+        amount,
+        payment_status,
+        payu_txn_id,
+        created_at
+       FROM registrations
+       ORDER BY created_at DESC`
+    );
+
+    const parser = new Parser();
+    const csv = parser.parse(result.rows);
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=ISML_Registrations.csv"
+    );
+
+    res.send(csv);
+  } catch (err) {
+    console.error("DOWNLOAD ERROR:", err);
+    res.status(500).send("Failed to download");
+  }
 });
